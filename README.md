@@ -1,5 +1,5 @@
 ### tabular-science ###
-tabular science course's final project:  [------->Link](https://docs.google.com/document/d/1EZeTlYX8Xc1S781jQoQHhIuZ9C_2gpgsMEb_9f-M0Jw/edit?usp=sharing)
+tabular science course's final project:  [------->Link](https://docs.google.com/document/d/1OEv8j-TgK1aESfY2fk6xFEHkfKgXDu04ubRXaOPLGfU/edit)
 
 
 ## :film_projector:	 Demonstration Video
