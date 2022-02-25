@@ -2,6 +2,9 @@
 tabular science course's final project:
 https://docs.google.com/document/d/1EZeTlYX8Xc1S781jQoQHhIuZ9C_2gpgsMEb_9f-M0Jw/edit?usp=sharing
 
+demo video:
+https://www.youtube.com/watch?v=iCAQ7swWwDQ&feature=em-share_video_user
+
 ## in order to run ##
 
  - install numpy, pandas, matplotlib, sklearn, seaborn
