@@ -28,10 +28,10 @@ FEATURE_CORR_PATH = "features_correlation.png"
 ############################################
 
 
-def send_email(_from, to, text, *files):
+def send_email(to, text, *files):
     try:
         msg = MIMEMultipart('related')
-        msg["From"] = _from
+        msg["From"] = EMAIL
         msg["Subject"] = "MLOPS RUN"
         msg["To"] = to
         text_ = MIMEText(text)
@@ -200,8 +200,7 @@ class ExtendedRandomForest:
         # log best model
         mlflow.sklearn.log_model(self._clf, artifact_path=f"random_forest_{self.dataset}")
 
-        send_email("ori@atidot.com",  # from
-                   "ori@atidot.com",  # to
+        send_email("email@email.com",  # to
                    f"model random forest for {self.dataset}.\n\n{text}",
                    FEATURE_CORR_PATH,
                    PARAMS_TO_SCORE_PATH,
