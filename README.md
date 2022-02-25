@@ -1,5 +1,6 @@
 ### tabular-science ###
-tabular science course's final project
+tabular science course's final project:
+https://docs.google.com/document/d/1EZeTlYX8Xc1S781jQoQHhIuZ9C_2gpgsMEb_9f-M0Jw/edit?usp=sharing
 
 ## in order to run ##
 
@@ -10,4 +11,3 @@ tabular science course's final project
  - write your dataset name
  
  - you may need change load_data function in order to use different datasets
-.
