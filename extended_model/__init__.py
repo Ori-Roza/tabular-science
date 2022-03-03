@@ -6,32 +6,18 @@ import pandas as pd
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from extended_model.config import *
 
 from matplotlib import pyplot as plt
-from sklearn import datasets
 from sklearn.decomposition import PCA
-from sklearn.ensemble import RandomForestClassifier
 import seaborn as sns
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
-from sklearn.preprocessing import MinMaxScaler
 
 
-################## CONFIG ##################
-EMAIL = "EMAIL"
-PASSWORD = "PASSWORD"
-
-DATASET_NAME = "wine"
-
-PARAMS_TO_SCORE_PATH = "params_to_score.jpg"
-FEATURE_IMPORTANCE_PATH = "feature_importance.jpg"
-FEATURE_CORR_PATH = "features_correlation.png"
-############################################
-
-
-def send_email(to, text, *files):
+def send_email(_from, to, text, *files):
     try:
         msg = MIMEMultipart('related')
-        msg["From"] = EMAIL
+        msg["From"] = _from
         msg["Subject"] = "MLOPS RUN"
         msg["To"] = to
         text_ = MIMEText(text)
@@ -48,28 +34,17 @@ def send_email(to, text, *files):
         print("Failed to send alert email.\nException: " + str(e))
 
 
-class ExtendedRandomForest:
-    n_estimators = [int(x) for x in np.linspace(start=100, stop=1000, num=10)]
-    max_features = ['log2', 'sqrt']
-    max_depth = [int(x) for x in np.linspace(start=1, stop=15, num=15)]
-    min_samples_split = [int(x) for x in np.linspace(start=2, stop=50, num=10)]
-    min_samples_leaf = [int(x) for x in np.linspace(start=2, stop=50, num=10)]
-    bootstrap = [True, False]
-
-    _hyperparams_pool = {"n_estimators": n_estimators,
-                         "max_features": max_features,
-                         "max_depth": max_depth,
-                         "min_samples_split": min_samples_split,
-                         "min_samples_leaf": min_samples_leaf,
-                         "bootstrap": bootstrap}
-
-    def __init__(self, X, y, dataset=None):
+class ExtendedModel:
+    def __init__(self, X, y, model, hyperparams, dataset=None, send_to_email=False):
+        self.model = model
+        self.hyperparams = hyperparams
         self._clf = None
         self._rs = None
         self.rs_df = None
         self.dataset = dataset
         self._X = X
         self._y = y
+        self.send_to_email = send_to_email
         self.X_train, self.X_validation, self.y_train, self.y_validation = train_test_split(X, y,
                                                                                             test_size=0.3
                                                                                             )
@@ -82,9 +57,9 @@ class ExtendedRandomForest:
                                                                                           test_size=0.5)
 
     def get_best_hyper_params(self):
-        rfc = RandomForestClassifier()
+        rfc = self.model()
         self._rs = RandomizedSearchCV(rfc,
-                                      self._hyperparams_pool,
+                                      self.hyperparams,
                                       n_iter=200,
                                       cv=3,
                                       verbose=1,
@@ -117,21 +92,19 @@ class ExtendedRandomForest:
                         mlflow.log_param(key, value)
 
     def params_to_score(self):
-        fig, axs = plt.subplots(ncols=3, nrows=2)
+        cols = len(self.hyperparams.keys()) // 2
+        fig, axs = plt.subplots(ncols=cols, nrows=2)
         sns.set(style="whitegrid", color_codes=True, font_scale=2)
         fig.set_size_inches(30, 25)
-        sns.barplot(x='param_n_estimators', y='mean_test_score', data=self.rs_df, ax=axs[0, 0], color='lightgrey')
-        axs[0, 0].set_title(label='n_estimators', size=30, weight='bold')
-        sns.barplot(x='param_min_samples_split', y='mean_test_score', data=self.rs_df, ax=axs[0, 1], color='coral')
-        axs[0, 1].set_title(label='min_samples_split', size=30, weight='bold')
-        sns.barplot(x='param_min_samples_leaf', y='mean_test_score', data=self.rs_df, ax=axs[0, 2], color='lightgreen')
-        axs[0, 2].set_title(label='min_samples_leaf', size=30, weight='bold')
-        sns.barplot(x='param_max_features', y='mean_test_score', data=self.rs_df, ax=axs[1, 0], color='wheat')
-        axs[1, 0].set_title(label='max_features', size=30, weight='bold')
-        sns.barplot(x='param_max_depth', y='mean_test_score', data=self.rs_df, ax=axs[1, 1], color='lightpink')
-        axs[1, 1].set_title(label='max_depth', size=30, weight='bold')
-        sns.barplot(x='param_bootstrap', y='mean_test_score', data=self.rs_df, ax=axs[1, 2], color='skyblue')
-        axs[1, 2].set_title(label='bootstrap', size=30, weight='bold')
+        i = 0
+        j = 0
+        for param in self.hyperparams.keys():
+            if j == cols:
+                j = 0
+                i += 1
+            sns.barplot(x=f"param_{param}", y='mean_test_score', data=self.rs_df, ax=axs[i, j], color='lightgrey')
+            axs[i, j].set_title(label=f"{param}", size=30, weight='bold')
+            j += 1
         plt.savefig(PARAMS_TO_SCORE_PATH)
 
     def trendline(self, data, order=1):
@@ -159,6 +132,8 @@ class ExtendedRandomForest:
                 text = f"\nThere is no trend for {col} - the best value is {df.keys()[-1]}\n"
 
             d += text
+            if not self.send_to_email:
+                print(d)
         return d
 
     def get_feature_importance(self, features):
@@ -184,7 +159,7 @@ class ExtendedRandomForest:
     def train(self, columns):
         best_conf = self.get_best_hyper_params()
 
-        self._clf = RandomForestClassifier(**best_conf)
+        self._clf = self.model(**best_conf)
         self._clf.fit(self._X, self._y)
 
         self.arrange_results()
@@ -198,13 +173,15 @@ class ExtendedRandomForest:
         for f in [FEATURE_CORR_PATH, PARAMS_TO_SCORE_PATH, FEATURE_IMPORTANCE_PATH]:
             mlflow.log_artifact(f)
         # log best model
-        mlflow.sklearn.log_model(self._clf, artifact_path=f"random_forest_{self.dataset}")
+        mlflow.sklearn.log_model(self._clf, artifact_path=f"{str(self.model)}_{self.dataset}")
 
-        send_email("email@email.com",  # to
-                   f"model random forest for {self.dataset}.\n\n{text}",
-                   FEATURE_CORR_PATH,
-                   PARAMS_TO_SCORE_PATH,
-                   FEATURE_IMPORTANCE_PATH)
+        if self.send_to_email:
+            send_email(EMAIL,  # from
+                       EMAIL,  # to
+                       f"model {str(self.model)} for {self.dataset}.\n\n{text}",
+                       FEATURE_CORR_PATH,
+                       PARAMS_TO_SCORE_PATH,
+                       FEATURE_IMPORTANCE_PATH)
 
     def predict(self, X_test, model=None):
         clf = model if model else self._clf
@@ -213,33 +190,8 @@ class ExtendedRandomForest:
         raise ValueError("model is not provided")
 
 
-def load_data(dataset):
-    # return dataset
-    data = pd.DataFrame(dataset['data'], columns=dataset.feature_names)
-    target = dataset['target']
-
-    X = data
-    y = target
-    y = np.array(y)
-    # preprocessing
-    scaler = MinMaxScaler()
-    X = scaler.fit_transform(X)
-
-    return dataset.feature_names, X, y
-
-
 def get_features_correlations(X, y, columns):
     _norm_ = pd.DataFrame(np.hstack((X, y[:, np.newaxis])),
                           columns=list(columns) + ['class'])
     cor = sns.pairplot(_norm_, hue='class', diag_kind='hist')
     cor.savefig(FEATURE_CORR_PATH)
-
-
-if __name__ == '__main__':
-    # Load dataset
-    columns, X, y = load_data(datasets.load_wine())
-
-    get_features_correlations(X, y, columns)
-    # train
-    clf = ExtendedRandomForest(X, y, dataset=DATASET_NAME)
-    clf.train(columns)
