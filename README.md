@@ -1,9 +1,9 @@
 ### tabular-science ###
-tabular science course's final project:
-https://docs.google.com/document/d/1EZeTlYX8Xc1S781jQoQHhIuZ9C_2gpgsMEb_9f-M0Jw/edit?usp=sharing
+tabular science course's final project:  [------->Link](https://docs.google.com/document/d/1OEv8j-TgK1aESfY2fk6xFEHkfKgXDu04ubRXaOPLGfU/edit)
 
-demo video:
-https://www.youtube.com/watch?v=iCAQ7swWwDQ&feature=em-share_video_user
+
+## :film_projector:	 Demonstration Video
+- demo video: [------->Link](https://www.youtube.com/watch?v=iCAQ7swWwDQ&feature=em-share_video_user)
 
 ## in order to run ##
 
