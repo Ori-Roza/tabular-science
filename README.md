@@ -3,7 +3,7 @@ tabular science course's final project:  [------->Link](https://docs.google.com/
 
 
 ## :film_projector:	 Demonstration Video
-- demo video: [------->Link](https://www.youtube.com/watch?v=iCAQ7swWwDQ&feature=em-share_video_user)
+- demo video: [------->Link](https://youtu.be/iCAQ7swWwDQ)
 
 ## in order to run ##
 
